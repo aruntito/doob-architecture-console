@@ -154,7 +154,8 @@ h1, h2, h3, h4, .brand-font { font-family: 'Satoshi', sans-serif; letter-spacing
   font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
   text-decoration: none;
 }
-.skip-link:focus { left: 1rem; top: 1rem; }
+/* Flush to the viewport top: at 1rem the chip's lower edge cut into the DOOB wordmark glyphs. */
+.skip-link:focus { left: 1rem; top: 0; }
 
 /* Visible keyboard focus across every interactive control */
 :focus-visible {
@@ -1143,6 +1144,13 @@ h1, h2, h3, h4, .brand-font { font-family: 'Satoshi', sans-serif; letter-spacing
         });
     }
   }
+
+  // The chart is built with the motion preference at creation time; re-arm it when the OS setting changes afterwards
+  reduceMotionQuery.addEventListener('change', () => {
+    if (!queueChartInstance) return;
+    queueChartInstance.options.animation = prefersReducedMotion() ? false : { duration: 400, easing: 'linear' };
+    queueChartInstance.update();
+  });
 </script>
 </body>
 </html>

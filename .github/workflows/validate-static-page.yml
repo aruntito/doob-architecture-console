@@ -69,4 +69,5 @@ jobs:
           check "keyboard activation handler"        "e.key === 'Enter' || e.key === ' '"
           check "nav reveals focused tab"            "primaryNav.addEventListener('focusin'"
           check "focus reveal scrolls nav only"      "primaryNav.scrollBy({ left: delta"
+          check "chart re-arms on live motion change" "reduceMotionQuery.addEventListener('change'"
           exit "$fail"
