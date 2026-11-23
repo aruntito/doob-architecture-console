@@ -139,12 +139,58 @@ h1, h2, h3, h4, .brand-font { font-family: 'Satoshi', sans-serif; letter-spacing
 #boot-overlay {
   transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* ========================================== */
+/* ACCESSIBILITY: Focus, Skip Link, Reduced Motion */
+/* ========================================== */
+
+/* Skip link - visually absent until keyboard focus reaches it */
+.skip-link {
+  position: absolute; left: -9999px; top: 0; z-index: 110;
+  background: #050505; color: #ededed;
+  border: 1px solid #222; border-radius: 4px;
+  padding: 0.6rem 1rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  text-decoration: none;
+}
+.skip-link:focus { left: 1rem; top: 1rem; }
+
+/* Visible keyboard focus across every interactive control */
+:focus-visible {
+  outline: 2px solid #ededed;
+  outline-offset: 3px;
+}
+.tab-btn:focus-visible,
+.domain-card:focus-visible,
+#ai-risk-btn:focus-visible {
+  outline: 2px solid #ededed;
+  outline-offset: -2px;
+}
+/* Pointer interactions must not paint a ring */
+:focus:not(:focus-visible) { outline: none; }
+
+/* Reduced motion - neutralises grid drift, pulses, flicker, packets, transitions */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .bg-grid { animation: none; }
+  .data-pulse { animation: none; opacity: 1; }
+  .err-flicker { animation: none; opacity: 1; }
+  .packet-h, .packet-v { animation: none; opacity: 0; }
+}
 </style>
 </head>
 <body class="antialiased selection:bg-white/10 selection:text-white pb-0 overflow-hidden">
 
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
 <!-- 6. Terminal Boot Sequence -->
-<div id="boot-overlay" class="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center pointer-events-none">
+<div id="boot-overlay" class="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center pointer-events-none" aria-hidden="true">
   <div class="w-[300px] text-left mono-font text-[10px] text-[#555] space-y-1.5" id="boot-text">
     <div class="text-[#7a7a7a]">> DOOB_OS BOOTSTRAP_ENV</div>
   </div>
@@ -179,19 +225,19 @@ h1, h2, h3, h4, .brand-font { font-family: 'Satoshi', sans-serif; letter-spacing
       <span class="brand-font text-[#ededed] font-bold text-xl leading-none tracking-tight">DOOB</span>
     </div>
     
-    <nav class="flex overflow-x-auto hide-scrollbar space-x-10 text-[10px] font-medium tracking-widest uppercase w-full">
-      <button onclick="switchTab('core')" id="tab-core" class="tab-btn tab-active whitespace-nowrap">Orchestration Core</button>
-      <button onclick="switchTab('domains')" id="tab-domains" class="tab-btn whitespace-nowrap">Domain Matrix</button>
-      <button onclick="switchTab('runtime')" id="tab-runtime" class="tab-btn whitespace-nowrap relative">
+    <nav class="flex overflow-x-auto hide-scrollbar space-x-10 text-[10px] font-medium tracking-widest uppercase w-full" aria-label="Primary">
+      <button type="button" onclick="switchTab('core')" id="tab-core" class="tab-btn tab-active whitespace-nowrap" aria-controls="section-core" aria-current="true">Orchestration Core</button>
+      <button type="button" onclick="switchTab('domains')" id="tab-domains" class="tab-btn whitespace-nowrap" aria-controls="section-domains">Domain Matrix</button>
+      <button type="button" onclick="switchTab('runtime')" id="tab-runtime" class="tab-btn whitespace-nowrap relative" aria-controls="section-runtime">
         Execution Runtime
-        <div class="absolute top-4 -right-2 w-1 h-1 rounded-full bg-[#F59E0B] data-pulse hidden" id="runtime-alert"></div>
+        <div class="absolute top-4 -right-2 w-1 h-1 rounded-full bg-[#F59E0B] data-pulse hidden" id="runtime-alert" aria-hidden="true"></div>
       </button>
-      <button onclick="switchTab('design')" id="tab-design" class="tab-btn whitespace-nowrap">Visual Protocol</button>
+      <button type="button" onclick="switchTab('design')" id="tab-design" class="tab-btn whitespace-nowrap" aria-controls="section-design">Visual Protocol</button>
     </nav>
   </div>
 </header>
 
-<main class="max-w-7xl mx-auto px-4 sm:px-6 mt-16 opacity-0 transition-opacity duration-1000" id="main-content">
+<main class="max-w-7xl mx-auto px-4 sm:px-6 mt-16 opacity-0 transition-opacity duration-1000" id="main-content" tabindex="-1">
 
   <!-- ========================================== -->
   <!-- TAB 1: ORCHESTRATION CORE                  -->
@@ -339,23 +385,23 @@ h1, h2, h3, h4, .brand-font { font-family: 'Satoshi', sans-serif; letter-spacing
   <section id="section-domains" class="hidden env-switch space-y-8 mt-8">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
       
-      <div class="lg:col-span-4 space-y-3 flex flex-col">
-        <div id="card-public" onclick="selectDomain('public')" class="domain-card active p-5 cursor-pointer relative transition-all rounded-md bg-[#080808] border border-[#222]">
+      <div class="lg:col-span-4 space-y-3 flex flex-col" role="group" aria-label="Environment domains">
+        <div id="card-public" onclick="selectDomain('public')" class="domain-card active p-5 cursor-pointer relative transition-all rounded-md bg-[#080808] border border-[#222]" role="button" tabindex="0" aria-pressed="true">
           <div class="indicator absolute left-0 top-0 bottom-0 w-[2px] bg-white"></div>
           <h4 class="font-medium text-[13px] text-[#ededed] ml-2">Public SaaS</h4>
           <p class="text-[10px] text-[#666] font-mono mt-1.5 ml-2">doob.cloud</p>
         </div>
-        <div id="card-reseller" onclick="selectDomain('reseller')" class="domain-card p-5 cursor-pointer relative transition-all rounded-md hover:bg-[#080808] border border-transparent">
+        <div id="card-reseller" onclick="selectDomain('reseller')" class="domain-card p-5 cursor-pointer relative transition-all rounded-md hover:bg-[#080808] border border-transparent" role="button" tabindex="0" aria-pressed="false">
           <div class="indicator absolute left-0 top-0 bottom-0 w-[2px] bg-transparent"></div>
           <h4 class="font-medium text-[13px] text-[#888] ml-2">Reseller Infra</h4>
           <p class="text-[10px] text-[#555] font-mono mt-1.5 ml-2">partners.doob.cloud</p>
         </div>
-        <div id="card-admin" onclick="selectDomain('admin')" class="domain-card p-5 cursor-pointer relative transition-all rounded-md hover:bg-[#080808] border border-transparent">
+        <div id="card-admin" onclick="selectDomain('admin')" class="domain-card p-5 cursor-pointer relative transition-all rounded-md hover:bg-[#080808] border border-transparent" role="button" tabindex="0" aria-pressed="false">
           <div class="indicator absolute left-0 top-0 bottom-0 w-[2px] bg-transparent"></div>
           <h4 class="font-medium text-[13px] text-[#888] ml-2">Admin Control</h4>
           <p class="text-[10px] text-[#555] font-mono mt-1.5 ml-2">admin.doob.cloud</p>
         </div>
-        <div id="card-api" onclick="selectDomain('api')" class="domain-card p-5 cursor-pointer relative transition-all rounded-md hover:bg-[#080808] border border-transparent">
+        <div id="card-api" onclick="selectDomain('api')" class="domain-card p-5 cursor-pointer relative transition-all rounded-md hover:bg-[#080808] border border-transparent" role="button" tabindex="0" aria-pressed="false">
           <div class="indicator absolute left-0 top-0 bottom-0 w-[2px] bg-transparent"></div>
           <h4 class="font-medium text-[13px] text-[#888] ml-2">API Layer</h4>
           <p class="text-[10px] text-[#555] font-mono mt-1.5 ml-2">api.doob.cloud</p>
@@ -441,7 +487,7 @@ h1, h2, h3, h4, .brand-font { font-family: 'Satoshi', sans-serif; letter-spacing
         
         <div class="flex-grow w-full h-[180px] mb-6 relative">
           <div class="absolute inset-0 border-b border-l border-[#111] pointer-events-none"></div>
-          <canvas id="queueChart"></canvas>
+          <canvas id="queueChart" role="img" aria-label="Queue throughput trend line, refreshed every two seconds. Numeric pending, active and failed counts are listed below the chart."></canvas>
         </div>
         
         <div class="grid grid-cols-3 gap-6 pt-5 border-t border-[#1a1a1a]">
@@ -544,11 +590,11 @@ h1, h2, h3, h4, .brand-font { font-family: 'Satoshi', sans-serif; letter-spacing
           LLM analysis of current queue depth, provider latency anomalies, and ledger drift.
         </p>
 
-        <button id="ai-risk-btn" onclick="analyzeStackRisk()" class="w-full bg-[#0a0a0a] hover:bg-[#111] border border-[#222] text-[#ccc] text-[10px] font-mono py-3 rounded transition-colors mb-6">
+        <button type="button" id="ai-risk-btn" onclick="analyzeStackRisk()" class="w-full bg-[#0a0a0a] hover:bg-[#111] border border-[#222] text-[#ccc] text-[10px] font-mono py-3 rounded transition-colors mb-6" aria-label="Execute stack risk analysis" aria-describedby="tech-ai-text">
           > EXECUTE_ANALYSIS
         </button>
 
-        <div id="tech-ai-result" class="hidden border-l border-[#7C3AED] pl-4">
+        <div id="tech-ai-result" class="hidden border-l border-[#7C3AED] pl-4" role="status" aria-live="polite">
           <div id="tech-ai-text" class="text-[10px] text-[#888] font-mono leading-relaxed uppercase"></div>
         </div>
       </div>
@@ -684,10 +730,16 @@ h1, h2, h3, h4, .brand-font { font-family: 'Satoshi', sans-serif; letter-spacing
 </footer>
 
 <script>
+  // --- Motion Preference Gate (mirrors the CSS reduced-motion media query) ---
+  const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const prefersReducedMotion = () => reduceMotionQuery.matches;
+
   // --- DOOB Motion Kinetics: Fluid Easing Interpolation ---
   function animateValue(objId, start, end, duration) {
       let obj = document.getElementById(objId);
       if(!obj) return;
+      // Reduced motion: settle on the end value immediately, no per-frame ticking
+      if (prefersReducedMotion()) { obj.innerText = end.toLocaleString(); return; }
       let startTimestamp = null;
       const step = (timestamp) => {
           if (!startTimestamp) startTimestamp = timestamp;
@@ -937,10 +989,11 @@ h1, h2, h3, h4, .brand-font { font-family: 'Satoshi', sans-serif; letter-spacing
       const section = document.getElementById('section-' + t);
       section.classList.add('hidden');
       section.classList.remove('env-switch'); // Reset animation state
-      
+
       const tabEl = document.getElementById('tab-' + t);
       tabEl.classList.remove('tab-active');
       tabEl.classList.add('text-[#666]');
+      tabEl.removeAttribute('aria-current');
       if(t==='runtime') tabEl.classList.remove('text-white');
     });
 
@@ -948,11 +1001,12 @@ h1, h2, h3, h4, .brand-font { font-family: 'Satoshi', sans-serif; letter-spacing
     activeSection.classList.remove('hidden');
     void activeSection.offsetWidth; // Force reflow
     activeSection.classList.add('env-switch');
-    
+
     const activeTabEl = document.getElementById('tab-' + tabId);
     activeTabEl.classList.add('tab-active');
     activeTabEl.classList.remove('text-[#666]');
-    
+    activeTabEl.setAttribute('aria-current', 'true');
+
     if(tabId === 'runtime' && !queueChartInstance) { initQueueChart(); }
   }
 
@@ -987,6 +1041,7 @@ h1, h2, h3, h4, .brand-font { font-family: 'Satoshi', sans-serif; letter-spacing
     document.querySelectorAll('.domain-card').forEach(el => {
       el.classList.remove('active', 'bg-[#080808]', 'border-[#222]');
       el.classList.add('border-transparent');
+      el.setAttribute('aria-pressed', 'false');
       const header = el.querySelector('h4');
       if(header) { header.classList.remove('text-[#ededed]'); header.classList.add('text-[#888]'); }
       const indicator = el.querySelector('.indicator');
@@ -997,6 +1052,7 @@ h1, h2, h3, h4, .brand-font { font-family: 'Satoshi', sans-serif; letter-spacing
     if (activeCard) {
         activeCard.classList.remove('border-transparent');
         activeCard.classList.add('active', 'bg-[#080808]', 'border-[#222]');
+        activeCard.setAttribute('aria-pressed', 'true');
         const header = activeCard.querySelector('h4');
         if(header) { header.classList.remove('text-[#888]'); header.classList.add('text-[#ededed]'); }
         const indicator = activeCard.querySelector('.indicator');
@@ -1021,6 +1077,16 @@ h1, h2, h3, h4, .brand-font { font-family: 'Satoshi', sans-serif; letter-spacing
       termsContainer.appendChild(span);
     });
   }
+
+  // --- Keyboard operability for the domain selector cards ---
+  document.querySelectorAll('.domain-card').forEach(card => {
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault(); // Space activates, and must not scroll the page
+        selectDomain(card.id.replace('card-', ''));
+      }
+    });
+  });
 
   function initQueueChart() {
     const canvas = document.getElementById('queueChart');
@@ -1049,7 +1115,7 @@ h1, h2, h3, h4, .brand-font { font-family: 'Satoshi', sans-serif; letter-spacing
               }
             },
             plugins: { legend: { display: false }, tooltip: { enabled: false } },
-            animation: { duration: 400, easing: 'linear' } // Smooth linear queue flow
+            animation: prefersReducedMotion() ? false : { duration: 400, easing: 'linear' } // Smooth linear queue flow, off when reduced motion is requested
           }
         });
     }
