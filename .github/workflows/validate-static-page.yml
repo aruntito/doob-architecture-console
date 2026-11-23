@@ -67,4 +67,6 @@ jobs:
           check "domain cards are keyboard focusable" 'tabindex="0"'
           check "domain cards expose pressed state"  'aria-pressed'
           check "keyboard activation handler"        "e.key === 'Enter' || e.key === ' '"
+          check "nav reveals focused tab"            "primaryNav.addEventListener('focusin'"
+          check "focus reveal scrolls nav only"      "primaryNav.scrollBy({ left: delta"
           exit "$fail"

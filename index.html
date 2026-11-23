@@ -1078,6 +1078,29 @@ h1, h2, h3, h4, .brand-font { font-family: 'Satoshi', sans-serif; letter-spacing
     });
   }
 
+  // --- Reveal a keyboard-focused tab inside the horizontally scrollable nav ---
+  // The nav clips its own overflow, so a tab can hold focus with most of its box
+  // outside the scrollport; scrolling the nav only never moves the page vertically.
+  const primaryNav = document.querySelector('.nav-container nav');
+  if (primaryNav) {
+    primaryNav.addEventListener('focusin', (event) => {
+      const tab = event.target.closest('.tab-btn');
+      if (!tab) return;
+      const navBox = primaryNav.getBoundingClientRect();
+      const tabBox = tab.getBoundingClientRect();
+      const slack = 2; // keeps a settled tab from re-triggering on sub-pixel rounding
+      let delta = 0;
+      if (tabBox.left < navBox.left + slack) {
+        delta = tabBox.left - navBox.left;
+      } else if (tabBox.right > navBox.right - slack) {
+        delta = tabBox.right - navBox.right;
+      }
+      if (Math.abs(delta) > 1) {
+        primaryNav.scrollBy({ left: delta, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+      }
+    });
+  }
+
   // --- Keyboard operability for the domain selector cards ---
   document.querySelectorAll('.domain-card').forEach(card => {
     card.addEventListener('keydown', (e) => {
