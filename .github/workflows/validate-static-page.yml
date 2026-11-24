@@ -1,0 +1,73 @@
+name: validate-static-page
+
+on:
+  push:
+    branches:
+      - feat/accessibility-motion-support
+  pull_request:
+    branches:
+      - feat/accessibility-motion-support
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Extract inline script from index.html
+        run: |
+          set -euo pipefail
+          awk '/^<script>$/{f=1;next} /^<\/script>$/{f=0} f' index.html > /tmp/inline.js
+          test -s /tmp/inline.js
+          wc -l /tmp/inline.js
+
+      - name: JavaScript syntax check (node --check)
+        run: node --check /tmp/inline.js
+
+      - name: HTML well-formedness (xmllint --html)
+        run: |
+          set -euo pipefail
+          if ! command -v xmllint >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends libxml2-utils
+          fi
+          xmllint --html --noout index.html
+
+      - name: Accessibility contract assertions
+        run: |
+          set -euo pipefail
+          fail=0
+          check() {
+            if grep -qF -- "$2" index.html; then
+              printf 'PASS  %s\n' "$1"
+            else
+              printf 'FAIL  %s\n      expected literal: %s\n' "$1" "$2"
+              fail=1
+            fi
+          }
+          check "skip link target exists"            'id="main-content"'
+          check "skip link present"                  'class="skip-link"'
+          check "nav has accessible label"           'aria-label="Primary"'
+          check "tabs declare aria-controls"         'aria-controls="section-core"'
+          check "aria-current set on active tab"     "setAttribute('aria-current', 'true')"
+          check "aria-current cleared on other tabs" "removeAttribute('aria-current')"
+          check "reduced-motion CSS query present"   '@media (prefers-reduced-motion: reduce)'
+          check "reduced-motion JS query present"    "matchMedia('(prefers-reduced-motion: reduce)')"
+          check "canvas has accessible name"         'role="img"'
+          check "AI button has accessible name"      'aria-label="Execute stack risk analysis"'
+          check "AI result is a live region"         'aria-live="polite"'
+          check "domain cards are keyboard focusable" 'tabindex="0"'
+          check "domain cards expose pressed state"  'aria-pressed'
+          check "keyboard activation handler"        "e.key === 'Enter' || e.key === ' '"
+          check "nav reveals focused tab"            "primaryNav.addEventListener('focusin'"
+          check "focus reveal scrolls nav only"      "primaryNav.scrollBy({ left: delta"
+          check "chart re-arms on live motion change" "reduceMotionQuery.addEventListener('change'"
+          exit "$fail"
